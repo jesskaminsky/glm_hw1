@@ -1,3 +1,4 @@
+#Jess, Blain, David
 #############PROBLEM 1###################
 wine <- read.csv('Wine.csv')
 
