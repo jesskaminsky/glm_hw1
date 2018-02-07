@@ -1,7 +1,7 @@
 #Jess, Blain, David
 #############PROBLEM 1###################
 wine <- read.csv('Wine.csv')
-
+attach(wine)
 summary(wine)
 
 cor(WINE, MORTALITY)
