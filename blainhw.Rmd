@@ -1,0 +1,31 @@
+---
+title: "Blain hw 1"
+author: "Blain Morin"
+date: "February 7, 2018"
+output: pdf_document
+---
+
+## Question 1:
+
+### Do these data suggest that heart disease death rates are associated with average wine consumption? If so, how can that be described?
+
+```{r}
+
+wine <- read.csv('Wine.csv')
+attach(wine)
+cor(WINE, MORTALITY)
+
+```
+
+We see that the correlation between wine consumption and mortality rates is -0.746. This is a fairly strong negative correlation which suggest that there is an association between wine consumption and heart disease mortality rates. This would suggest that increased wine consumption is associated with lower heart disease mortality rates.
+
+We can further investigate this association by running a linear model. It makes sense that wine consumption would be the predictor of mortality rates and not nice versa because death couldn't possibly be on the causal pathway to wine consumption.
+
+```{r}
+
+plot
+
+wine_model = lm(MORTALITY ~ WINE, wine)
+summary(wine_model)
+
+```
