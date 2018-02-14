@@ -96,14 +96,6 @@ logdata = Wine %>%
 
 ###Do any countries have substantially higher or lower death rates than others with similar wine consumption rates?
 
-We can see from the above figure that there seems to be significant variation in log mortality rates among countries with similar log wine consumtion rates, especially when log wine consumption is between 1 and 2. Let's look more closely at the data in this range:
+We can see from the above figure that there seems to be significant variation in log mortality rates among countries with similar log wine consumption rates, especially when log wine consumption is between 1 and 2. On the figure above, the gray bar represents the 95% confidence interval. We can see that some points lie above the gray bar and some below the bar. 
 
-```{r, echo = FALSE}
-
-lowrange = logdata %>% filter(loggedwine < 2.5)
-
-lowrange
-
-
-```
 
