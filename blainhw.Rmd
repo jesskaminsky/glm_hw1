@@ -21,11 +21,20 @@ We see that the correlation between wine consumption and mortality rates is -0.7
 
 We can further investigate this association by running a linear model. It makes sense that wine consumption would be the predictor of mortality rates and not nice versa because death couldn't possibly be on the causal pathway to wine consumption.
 
+First, let's plot the data to check the relationship.
+
+```{r}
+plot(WINE, MORTALITY)
+```
+
+We can see from the graph that the relationship is negative but appears to be more of a curve shape rather than linear. Using a log tranformation may make the data more linear.
+
 ```{r}
 
-plot
-
-wine_model = lm(MORTALITY ~ WINE, wine)
-summary(wine_model)
+plot(log(WINE), MORTALITY)
+plot(WINE, log(MORTALITY))
+plot(log(WINE), log(MORTALITY))
 
 ```
+
+Log transformations seem to help make the data appear more linear. 

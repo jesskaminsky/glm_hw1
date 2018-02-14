@@ -1,0 +1,109 @@
+---
+title: "Applied LM Homework #1"
+author: "Blain Morin"
+date: "February 13, 2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+```{r, echo=FALSE, results='hide', include=FALSE}
+library(tidyverse)
+library(gridExtra)
+library(readr)
+library(sjPlot)
+Wine = read_csv("Wine.csv")
+attach(Wine)
+```
+
+
+#Question 1: Wine
+
+###The data in the file wine.csv (in the datasets folder on Canvas) give the average wine consumption rates (in liters per person) and number of ischemic heart attack deaths (per 1000 men aged 55 to 64 years) for 18 industrialized countries.
+
+###Analyze the data and write a brief report that includes a summary of findings, a graphical display and a section describing the methods used to answer the questions of interest.
+
+
+
+First, lets explore the wine data. 
+
+
+```{r}
+dim(Wine)
+
+summary(Wine)
+```
+
+We see that the data set contains wine consumption and heart disease mortality rates for 18 different countries. The min, max, median, mean, and quartiles are shown in the above table. 
+
+Next, let's visualize the data using a scatter plot:
+
+```{r, echo=FALSE}
+
+ggplot(data = Wine, aes(x = WINE, y = MORTALITY)) +
+  geom_point()
+
+```
+
+###Do these data suggest that heart disease death rates are associated with average wine consumption? If so, how can that be described?
+
+We can see from the graph that there seems to be a negative correlation between wine consumption and heart disease death rates. Computing the correlation confirms the inverse relationship:
+
+```{r}
+cor(WINE, MORTALITY)
+```
+
+Although there is a strong negative correlation, the relationship does not seem to be linear. We can try to make a stronger linear relationship by using log transformations:
+
+```{r, echo=FALSE}
+
+nolog = ggplot(data = Wine) + geom_point(aes(x = WINE, y = MORTALITY), color = "red")  
+
+logwine = ggplot(data = Wine) + geom_point(aes(x = log(WINE), y = MORTALITY), color = "yellow") 
+
+logmortality = ggplot(data = Wine) + geom_point(aes(x = WINE, y = log(MORTALITY)), color = "blue") 
+
+logboth = ggplot(data = Wine) + geom_point(aes(x = log(WINE), y = log(MORTALITY)), color = "green") 
+
+grid.arrange(nolog, logwine, logmortality, logboth, nrow = 2)
+
+```
+
+Visually, it seems that using log wine consumption and using both log wine and log mortality have the best linear appearance. Next, lets run a linear model on the set of transformed data. 
+
+```{r, echo = FALSE}
+lm_nolog = lm(MORTALITY~WINE)
+lm_logwine =lm(MORTALITY~log(WINE))
+lm_logmortality = lm(log(MORTALITY)~WINE)
+lm_logboth = lm(log(MORTALITY)~log(WINE))
+
+lmlist = list(lm_nolog, lm_logwine, lm_logmortality, lm_logboth)
+
+lm_table = sjt.lm(lmlist, no.output = TRUE)
+
+lm_table
+```
+
+We see from the table that the model with the best linear fit (from the R squared and adjusted R squared) is from the model that uses log transforms for both wine consumption and mortality. Here is the linear model plotted on the scatterplot:
+
+```{r}
+logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE)
+
+logdata = Wine %>%
+  mutate(loggedwine = log(WINE), loggedmortality = log(MORTALITY)) %>%
+  select(COUNTRY, loggedwine, loggedmortality)
+```
+
+###Do any countries have substantially higher or lower death rates than others with similar wine consumption rates?
+
+We can see from the above figure that there seems to be significant variation in log mortality rates among countries with similar log wine consumtion rates, especially when log wine consumption is between 1 and 2. Let's look more closely at the data in this range:
+
+```{r, echo = FALSE}
+
+lowrange = logdata %>% filter(loggedwine < 2.5)
+
+lowrange
+
+
+```
+
