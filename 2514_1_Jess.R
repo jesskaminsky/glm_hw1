@@ -26,6 +26,7 @@ wine$level[13:18] <- "high"
 flowers <- read.csv('flowers.csv')
 flowers[,4] <- rep(c(1,2))
 names(flowers)[4] <- "REPLICATE"
+flowers$REPLICATE <- as.factor(REPLICATE)
 
 ####part b####
 min(flowers$INTENS)
@@ -52,13 +53,18 @@ for (i in 1:nrow(flowers)) {
     flowers$INTENS_CAT[i] <- 6
   }
 }
+flowers$INTENS_CAT <- as.factor(INTENS_CAT)
+
+t.test(flowers$FLOWERS ~ flowers$REPLICATE)
+
 ####part c####
 #The research questions are: What are effects of intensity and timing? 
 #Is there an interaction between the two factors?
 
 ####part d####
 #First create an analysis of variance using timing and the categorical 
-#form of the light intensity variable. Determine if there is an effect of each factor.
+#form of the light intensity variable. 
+#Determine if there is an effect of each factor.
 summary(aov(FLOWERS ~ TIME + INTENS_CAT, flowers))
 m1 <- lm(FLOWERS ~ TIME + INTENS_CAT, flowers)
 
@@ -83,14 +89,15 @@ anova(m1, m2, m3, m4)
 ####part h####
 #Predict the number of flowers grown at each combination 
 #of light and timing for each of the four models.
-intenscat_inputs <- data.frame(TIME = c(rep(1,6), rep(2,6)), INTENS_CAT = c(rep(seq(1,6), 2)))
-m1_predict <- predict(m1, intenscat_inputs)
-m2_predict <- predict(m2, intenscat_inputs)
+m1_predict <- predict(m1)
+m2_predict <- predict(m2)
+m3_predict <- predict(m3)
+m4_predict <- predict(m4)
 
-intens_inputs <- data.frame(TIME = c(1,1,1,1,1,1,2,2,2,2,2,2), INTENS = c(150,300,450,600,750,900,150,300,450,600,750,900))
-m3_predict <- predict(m3, intens_inputs)
-m4_predict <- predict(m4, intens_inputs)
-
+predicted_values <- cbind(time = flowers$TIME, intensity = flowers$INTENS, 
+                          intensity_cat = flowers$INTENS_CAT,
+                          m1 = m1_predict, m2 = m2_predict, m3 = m3_predict,
+                          m4 = m4_predict)
 ####part i####
 #Compare each prediction to the observed number of flowers and calculate the 
 #difference (observed – predicted). This is the residual. Calculate the residual mean
@@ -98,9 +105,33 @@ m4_predict <- predict(m4, intens_inputs)
 #the number of residual degrees of freedom. This should equal the mean squared error in each 
 #ANOVA table.
 
+##calculate residual values
+residual_values <- cbind(m1 = flowers$FLOWERS - m1_predict, m2 = flowers$FLOWERS - m2_predict,
+                         m3 = flowers$FLOWERS - m3_predict, m4 = flowers$FLOWERS - m4_predict)
+
+##calculate MSE manually and show that it is equal to the MSE from the anova table
+MSE_m1 <- sum(residual_values[,1] * residual_values[,1]) / m1$df.residual
+ANOVA_MSE_1 <- summary(aov(m1))[[1]] $ `Mean Sq`[3]
+
+MSE_m2 <- sum(residual_values[,2] * residual_values[,2]) / m2$df.residual
+ANOVA_MSE_2 <- summary(aov(m2))[[1]] $ `Mean Sq`[4]
+
+MSE_m3 <- sum(residual_values[,3] * residual_values[,3]) / m3$df.residual
+ANOVA_MSE_3 <- summary(aov(m3))[[1]] $ `Mean Sq`[3]
+
+MSE_m4 <- sum(residual_values[,4] * residual_values[,4]) / m4$df.residual
+ANOVA_MSE_4 <- summary(aov(m4))[[1]] $ `Mean Sq`[4]
+
+
 ####part j####
 #Now plot the residuals vs. the predicted for each model and see if there are any patterns. 
 #If you see any, what might you do to remove them?
+#model 1 plot
+plot(residual_values[,1], predicted_values[,4])
+plot(residual_values[,2], predicted_values[,5])
+plot(residual_values[,3], predicted_values[,6])
+plot(residual_values[,4], predicted_values[,7])
+
 
 ####part k####
 #Finally, take the model you think describes the data the best and write a short report for 
