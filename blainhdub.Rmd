@@ -17,7 +17,7 @@ attach(Wine)
 ```
 
 
-#Question 1: Wine
+# Question 1: Wine
 
 ###The data in the file wine.csv (in the datasets folder on Canvas) give the average wine consumption rates (in liters per person) and number of ischemic heart attack deaths (per 1000 men aged 55 to 64 years) for 18 industrialized countries.
 
@@ -45,7 +45,7 @@ ggplot(data = Wine, aes(x = WINE, y = MORTALITY)) +
 
 ```
 
-###Do these data suggest that heart disease death rates are associated with average wine consumption? If so, how can that be described?
+### Do these data suggest that heart disease death rates are associated with average wine consumption? If so, how can that be described?
 
 We can see from the graph that there seems to be a negative correlation between wine consumption and heart disease death rates. Computing the correlation confirms the inverse relationship:
 
@@ -65,7 +65,7 @@ logmortality = ggplot(data = Wine) + geom_point(aes(x = WINE, y = log(MORTALITY)
 
 logboth = ggplot(data = Wine) + geom_point(aes(x = log(WINE), y = log(MORTALITY)), color = "green") 
 
-grid.arrange(nolog, logwine, logmortality, logboth, nrow = 2)
+grid.arrange(nolog, logwine, logmortality, logboth, nrow = 2, top = "Figure 1")
 
 ```
 
@@ -87,15 +87,74 @@ lm_table
 We see from the table that the model with the best linear fit (from the R squared and adjusted R squared) is from the model that uses log transforms for both wine consumption and mortality. Here is the linear model plotted on the scatterplot:
 
 ```{r}
-logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE)
+logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE) + ggtitle("Figure 2")
 
 logdata = Wine %>%
   mutate(loggedwine = log(WINE), loggedmortality = log(MORTALITY)) %>%
   select(COUNTRY, loggedwine, loggedmortality)
 ```
 
-###Do any countries have substantially higher or lower death rates than others with similar wine consumption rates?
+### Do any countries have substantially higher or lower death rates than others with similar wine consumption rates?
 
-We can see from the above figure that there seems to be significant variation in log mortality rates among countries with similar log wine consumption rates, especially when log wine consumption is between 1 and 2. On the figure above, the gray bar represents the 95% confidence interval. We can see that some points lie above the gray bar and some below the bar. 
+We can see from "Figure 2"" that there seems to be significant variation in log mortality rates among countries with similar log wine consumption rates, especially when log wine consumption is between 1 and 2. On the figure above, the gray bar represents the 95% confidence interval. We can see that some points lie above the gray bar and some below the bar. 
+
+# Question 2
+
+### Meadowfoam is a small plant that grows in Pacific Northwest and is domesticated for its seed oil. A study was set up to determine if meadowfoam can be made into a profitable crop. In a controlled growth chamber, the plant was grown at 6 different light intensities and two different timings of onset of light treatment. The outcome of interest is the number of flowers per plant which was measured by averaging numbers of flowers produced by 10 seedlings in each group. Growth was replicated at each combination of time and light intensity.
+
+### a. First put the data into a dataset with four variables: number of flowers, light intenisty, timing and replicate.
+
+```{r, results = "hide"}
+
+flowers <- read.csv('flowers.csv')
+flowers[,4] <- rep(c(1,2))
+names(flowers)[4] <- "REPLICATE"
+
+```
+
+### b. Create a categorical form of the light intensity with 6 categories.
+
+```{r, results = "hide"}
+
+flowers = flowers %>%
+  mutate(CAT_INTENS = as.factor(INTENS))
+
+```
+
+### c. The research questions are: What are effects of intensity and timing? Is there an interaction between the two factors?
+
+### d. First create an analysis of variance using timing and the categorical form of the light intensity variable. Determine if there is an effect of each factor.
+
+```{r, echo = FALSE}
+
+summary(aov(FLOWERS ~ TIME + CAT_INTENS, data = flowers))
+
+```
+
+From the above anova table, there is evidence to suggest that both time and intensity have an effect on the number of flowers. The large f-statistics and small p values mean that there is a difference between the mean number of flowers between early and late and also that at least on of the light intensity categories has a significant difference in the number of flowers. 
+
+### e. Then create an interaction between light intensity and timing by multiplying the two variables and test for the presence of an interaction.
+
+```{r, echo = FALSE}
+
+summary( aov(FLOWERS ~ TIME + CAT_INTENS + TIME*CAT_INTENS, data = flowers))
+
+```
+
+From the above anova table, there is not evidene to suggest that there is a significant interaction between time and light intensity (as a categorical variable).
+
+### f. Now repeat the process but using light intensity as a continuous variable.
+
+```{r, echo = FALSE}
+
+summary( aov(FLOWERS ~ TIME + INTENS, data = flowers))
+
+```
+
+```{r, echo = FALSE}
+
+summary( aov(FLOWERS ~ TIME + INTENS + TIME*INTENS, data = flowers))
+
+```
 
 
