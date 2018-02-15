@@ -145,11 +145,17 @@ From the above anova table, there is not evidene to suggest that there is a sign
 
 ### f. Now repeat the process but using light intensity as a continuous variable.
 
+The ANOVA table for time and intensity as a continuous varibiable is as follows:
+
 ```{r, echo = FALSE}
 
 summary( aov(FLOWERS ~ TIME + INTENS, data = flowers))
 
 ```
+
+
+The ANOVA table for time, intensity as a continuous variable, anf their interaction is as follows: 
+
 
 ```{r, echo = FALSE}
 
@@ -157,4 +163,29 @@ summary( aov(FLOWERS ~ TIME + INTENS + TIME*INTENS, data = flowers))
 
 ```
 
+Similar to the model where light intensity was coded as categorical, we see that the data does not provide evidence of an interaction between time and intensity. 
+
+
+### g. Then perform F-tests to compare the four model you have created (light as continuous and categorical with and without the interaction)
+
+Here is the summary of an f-test with light as a categorical variable, between the model without the interaction term and the model with the interaction term:
+
+```{r}
+
+anova(lm(FLOWERS ~ TIME + CAT_INTENS, data = flowers), lm(FLOWERS ~ TIME + CAT_INTENS + TIME * CAT_INTENS, data = flowers))
+
+```
+
+
+Here is the summary of an f-test with light as a continuous variable, between the model without the interaction term and the model with the interaction term:
+
+```{r}
+
+anova(lm(FLOWERS ~ TIME + INTENS, data = flowers), lm(FLOWERS ~ TIME + INTENS + TIME * INTENS, data = flowers))
+
+```
+
+Both ANOVA tables suggest that there is not enough evidence to suggest that we should include an interaction term. We can see that the p-value for the f-statistic for the comparison of the models is the same as the p-value for their corresponding interaction term.
+
+### h. Predict the number of flowers grown at each combination of light and timing for each of the four models.
 
