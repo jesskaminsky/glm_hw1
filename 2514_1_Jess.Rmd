@@ -11,39 +11,46 @@ wine <- read.csv('Wine.csv')
 attach(wine)
 ```
 
-Do these data suggest that heart disease death rates are associated with average wine consumption? If so, how can that be described?
-
 In assessing the relationship between heart disease death rates and average wine consumptions, we will begin by performing simple exploratory data analysis on the data. There are 18 countries represented in this data set and we have average rates of wine consumption and heart disease mortality rates for each country. The purpose of this analysis is to determine if heart disease mortality is associated with average wine consumption and the nature of that relationship, if it exists.
 ```{r}
 summary(wine)
 ```
+
+When looking at a scatterplot of wine vs. mortality, we see that the data looks somewhat non-linear. We will continue to explore the raw data and consider applying a log transformation on the variables.
 ```{r}
 plot(WINE, MORTALITY, xlab = "Wine Consumption", ylab = "Heart Disease Mortality Rate")
 ```
-
+The correlation between our independent variable - wine consumption - and our dependent variable - mortality rate - is -0.74, implying an inverse and moderately strong relationship between the variables. When running a linear regression on our data, we obtain the model Mortality Rate = 7.686 - 0.076 * Wine Consumption, showing that as wine consumption increases, mortality rate decreases. The coefficient of determination of this model (r-squared) is 0.5281 indicating that the observed data are moderately well fit to the regression line. We will now log transform the data and further explore the relationship between these two variables assuming that the data is not normally distributed.
 ```{r}
 cor(WINE, MORTALITY)
 model1 <- lm(MORTALITY ~ WINE, wine)
 summary(model1)
+```
+*CONSIDER REMOVING*
+```{r}
 plot(model1)
 ```
 
+When observing a scatter plot of the log-transformed data, the trend appears to follow a linear trend more closely than the raw data.
+```{r}
+plot(log(WINE), log(MORTALITY), xlab = "Log of Wine Consumption", ylab = "Log of Mortality Rate")
+```
+
+The correlation between the two log transformed variables is -0.859 - stronger than the correlation of the same two variables before they were transformed. After running a linear regression on our transformed data, we obtain the model log Mortality Rate = 2.55 - 0.355 * log Wine Consumption. The coefficient of determination of this model (r-squared) is 0.7221 indicating that the observed transformed data are fit to the regression line better than the raw data. This means that 72% of the variation among observed values of heart disease mortality rate can be explained by the log linear relationship between wine consumption and mortality rate. Based on the log linear model we generated, every 1% change in wine consumption results in a -0.35% change in mortality rate.
 ```{r}
 cor(log(WINE), log(MORTALITY))
-plot(log(WINE), log(MORTALITY), xlab = "Log of Wine Consumption", ylab = "Log of Mortality Rate")
-model2 <- log(MORTALITY) ~ log(WINE), wine)
-lm(model2)
+model2 <- lm(log(MORTALITY) ~ log(WINE), wine)
+summary(model2)
 plot(model2)
 ```
 
-**Do any countries have substantially higher or lower death rates than others with similar wine consumption rates?**
-
-#look for a significant difference in mean death rate within each level group?
+Figure X shows the log linear model we generated in pink. The gray bands are 95% confidence intervals for the mean log mortality at each log wine consumption. The purple points are the log transformed predicted values. We see that many of the points fall outside of the mean confidence interval. This provides some evidence that there are countries that differ from the mean mortality rate among countries with similar levels of wine consumption. To further explore this relationship we will stratify wine consumption into tertiles and compare the variances of each group. 
 ```{r}
-### add a column for wine consumption level - a categorical variable
-wine$level[1:6] <- "low"
-wine$level[7:12] <- "medium"
-wine$level[13:18] <- "high"
+logboth = ggplot(data = wine) + geom_point(aes(x = log(wine$WINE), y = log(wine$MORTALITY)), color = "purple")
+logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE, color = "pink") + theme_minimal() + xlab("Log of Wine Consumption") + ylab("Log of Mortality Rate")
+```
+```{r}
+
 ```
 
 *Question 2*
@@ -88,9 +95,13 @@ The research questions are: *What are effects of intensity and timing? Is there 
 
 Part D:
 First create an analysis of variance using timing and the categorical form of the light intensity variable. Determine if there is an effect of each factor.
+
+In this study, each combination of timing and light intensity was replicated twice. Before analyzing the data, we should verify that replicates do not have a different effect on flower growth. After performing an analysis on the raw data predicting flower growth from time, light intensity as a categorical variable, and replicate group, we observe that the coefficient for replicate is insignificant which means that the results do not differ by replicate. We can continue the data analysis with the data combined anddisregard the replicate term.
 ```{r}
-summary(aov(FLOWERS ~ TIME + INTENS_CAT, flowers))
+summary(aov(FLOWERS ~ TIME + INTENS_CAT + REPLICATE, flowers))
+summary(aov(FLOWERS ~ TIME + INTENS_CAT + TIME*INTENS_CAT, flowers))
 m1 <- lm(FLOWERS ~ TIME + INTENS_CAT, flowers)
+summary(m1)
 ```
 
 Part E:
@@ -113,7 +124,8 @@ m4 <- lm(FLOWERS ~ TIME + INTENS + TIME*INTENS, flowers)
 Part G:
 Then perform F-tests to compare the four model you have created (light as continuous and categorical with and without the interaction)
 ```{r}
-anova(m1, m2, m3, m4)
+anova(m1, m2)
+anova(m3, m4)
 ```
 
 Part H:
