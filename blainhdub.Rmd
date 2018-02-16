@@ -17,7 +17,7 @@ attach(Wine)
 ```
 
 
-#Question 1: Wine
+# Question 1: Wine
 
 ###The data in the file wine.csv (in the datasets folder on Canvas) give the average wine consumption rates (in liters per person) and number of ischemic heart attack deaths (per 1000 men aged 55 to 64 years) for 18 industrialized countries.
 
@@ -45,7 +45,7 @@ ggplot(data = Wine, aes(x = WINE, y = MORTALITY)) +
 
 ```
 
-###Do these data suggest that heart disease death rates are associated with average wine consumption? If so, how can that be described?
+### Do these data suggest that heart disease death rates are associated with average wine consumption? If so, how can that be described?
 
 We can see from the graph that there seems to be a negative correlation between wine consumption and heart disease death rates. Computing the correlation confirms the inverse relationship:
 
@@ -59,13 +59,13 @@ Although there is a strong negative correlation, the relationship does not seem 
 
 nolog = ggplot(data = Wine) + geom_point(aes(x = WINE, y = MORTALITY), color = "red")  
 
-logwine = ggplot(data = Wine) + geom_point(aes(x = log(WINE), y = MORTALITY), color = "yellow") 
+logwine = ggplot(data = Wine) + geom_point(aes(x = log(WINE), y = MORTALITY), color = "purple") 
 
 logmortality = ggplot(data = Wine) + geom_point(aes(x = WINE, y = log(MORTALITY)), color = "blue") 
 
 logboth = ggplot(data = Wine) + geom_point(aes(x = log(WINE), y = log(MORTALITY)), color = "green") 
 
-grid.arrange(nolog, logwine, logmortality, logboth, nrow = 2)
+grid.arrange(nolog, logwine, logmortality, logboth, nrow = 2, top = "Figure 1")
 
 ```
 
@@ -84,18 +84,242 @@ lm_table = sjt.lm(lmlist, no.output = TRUE)
 lm_table
 ```
 
+
 We see from the table that the model with the best linear fit (from the R squared and adjusted R squared) is from the model that uses log transforms for both wine consumption and mortality. Here is the linear model plotted on the scatterplot:
 
-```{r}
-logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE)
+
+```{r, echo = FALSE}
+logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE) + ggtitle("Figure 2")
 
 logdata = Wine %>%
   mutate(loggedwine = log(WINE), loggedmortality = log(MORTALITY)) %>%
   select(COUNTRY, loggedwine, loggedmortality)
 ```
 
-###Do any countries have substantially higher or lower death rates than others with similar wine consumption rates?
+### Do any countries have substantially higher or lower death rates than others with similar wine consumption rates?
 
-We can see from the above figure that there seems to be significant variation in log mortality rates among countries with similar log wine consumption rates, especially when log wine consumption is between 1 and 2. On the figure above, the gray bar represents the 95% confidence interval. We can see that some points lie above the gray bar and some below the bar. 
+We can see from "Figure 2"" that there seems to be significant variation in log mortality rates among countries with similar log wine consumption rates, especially when log wine consumption is between 1 and 2. On the figure above, the gray bar represents the 95% confidence interval. We can see that some points lie above the gray bar and some below the bar. 
 
+# Question 2
+
+### Meadowfoam is a small plant that grows in Pacific Northwest and is domesticated for its seed oil. A study was set up to determine if meadowfoam can be made into a profitable crop. In a controlled growth chamber, the plant was grown at 6 different light intensities and two different timings of onset of light treatment. The outcome of interest is the number of flowers per plant which was measured by averaging numbers of flowers produced by 10 seedlings in each group. Growth was replicated at each combination of time and light intensity.
+
+### a. First put the data into a dataset with four variables: number of flowers, light intenisty, timing and replicate.
+
+```{r, results = "hide"}
+
+flowers <- read.csv('flowers.csv')
+flowers[,4] <- rep(c(1,2))
+names(flowers)[4] <- "REPLICATE"
+
+```
+
+### b. Create a categorical form of the light intensity with 6 categories.
+
+```{r, results = "hide"}
+
+flowers = flowers %>%
+  mutate(CAT_INTENS = as.factor(INTENS))
+
+```
+
+### c. The research questions are: What are effects of intensity and timing? Is there an interaction between the two factors?
+
+First, lets run 4 linear model: 
+
+Model 1 is number of flowers regressed on categorical intensity and time.
+
+Model 2 is number of flowers regressed on categorical intensity and time with their interaction.
+
+Model 3 is number flowers regressed on continuous intensity and time.
+
+Model 4 is number of flowers regressed on continuous intensity and time with their interaction. 
+
+Their model summaries are:
+
+```{r, echo = FALSE}
+lm1 = lm(FLOWERS ~ TIME + CAT_INTENS, data = flowers)
+lm2 = lm(FLOWERS ~ TIME + CAT_INTENS + TIME * CAT_INTENS, data = flowers)
+lm3 = lm(FLOWERS ~ TIME + INTENS, data = flowers)
+lm4 = lm(FLOWERS ~ TIME + INTENS + TIME*INTENS, data = flowers)
+
+flowerlist = list(lm1, lm2, lm3, lm4)
+
+flowertable = sjt.lm(flowerlist, no.output = TRUE)
+
+flowertable
+
+```
+
+
+### d. First create an analysis of variance using timing and the categorical form of the light intensity variable. Determine if there is an effect of each factor.
+
+```{r, echo = FALSE}
+
+summary(aov(FLOWERS ~ TIME + CAT_INTENS, data = flowers))
+
+```
+
+From the above anova table, there is evidence to suggest that both time and intensity have an effect on the number of flowers. The large f-statistics and small p values mean that there is a difference between the mean number of flowers between early and late and also that at least on of the light intensity categories has a significant difference in the number of flowers. 
+
+### e. Then create an interaction between light intensity and timing by multiplying the two variables and test for the presence of an interaction.
+
+```{r, echo = FALSE}
+
+summary( aov(FLOWERS ~ TIME + CAT_INTENS + TIME*CAT_INTENS, data = flowers))
+
+```
+
+From the above anova table, there is not evidene to suggest that there is a significant interaction between time and light intensity (as a categorical variable).
+
+### f. Now repeat the process but using light intensity as a continuous variable.
+
+The ANOVA table for time and intensity as a continuous varibiable is as follows:
+
+```{r, echo = FALSE}
+
+summary( aov(FLOWERS ~ TIME + INTENS, data = flowers))
+
+```
+
+
+The ANOVA table for time, intensity as a continuous variable, anf their interaction is as follows: 
+
+
+```{r, echo = FALSE}
+
+summary( aov(FLOWERS ~ TIME + INTENS + TIME*INTENS, data = flowers))
+
+```
+
+Similar to the model where light intensity was coded as categorical, we see that the data does not provide evidence of an interaction between time and intensity. 
+
+
+### g. Then perform F-tests to compare the four model you have created (light as continuous and categorical with and without the interaction)
+
+Here is the summary of an f-test with light as a categorical variable, between the model without the interaction term and the model with the interaction term:
+
+```{r}
+
+anova(lm(FLOWERS ~ TIME + CAT_INTENS, data = flowers), lm(FLOWERS ~ TIME + CAT_INTENS + TIME * CAT_INTENS, data = flowers))
+
+```
+
+
+Here is the summary of an f-test with light as a continuous variable, between the model without the interaction term and the model with the interaction term:
+
+```{r}
+
+anova(lm(FLOWERS ~ TIME + INTENS, data = flowers), lm(FLOWERS ~ TIME + INTENS + TIME * INTENS, data = flowers))
+
+```
+
+Both ANOVA tables suggest that there is not enough evidence to suggest that we should include an interaction term. We can see that the p-value for the f-statistic for the comparison of the models is the same as the p-value for their corresponding interaction term.
+
+### h. Predict the number of flowers grown at each combination of light and timing for each of the four models.
+
+Here is the code we use to set up the predictions and calculate the mean sqaured errors:
+```{r, results="hide"}
+
+m1 = lm(FLOWERS ~ TIME + CAT_INTENS, data = flowers)
+p1 = predict(m1, se.fit = TRUE, interval = "conf")
+resi_m1 = p1$fit[,1] - flowers$FLOWERS
+mse_m1 = sum(resi_m1^2) / p1$df
+
+m2 = lm(FLOWERS ~ TIME + CAT_INTENS + TIME*CAT_INTENS, data = flowers)
+p2 = predict(m2, se.fit=TRUE, interval = "conf")
+resi_m2 = p2$fit[,1] - flowers$FLOWERS
+mse_m2 = sum(resi_m2^2) / p2$df
+
+m3 = lm(FLOWERS ~ TIME + INTENS, data = flowers)
+p3 = predict(m3, se.fit = TRUE, interval = "conf")
+resi_m3 = p3$fit[,1] - flowers$FLOWERS
+mse_m3 = sum(resi_m3^2) / p3$df
+
+
+m4 = lm(FLOWERS ~ TIME + INTENS + TIME*INTENS, data = flowers)
+p4 = predict(m4, se.fit = TRUE, interval = "conf")
+resi_m4 = p4$fit[,1] - flowers$FLOWERS
+mse_m4 = sum(resi_m4^2) / p4$df
+
+```
+
+Predictions for each of the models are shown in the table below:
+```{r}
+predictions = data.frame(flowers$TIME,
+                         flowers$INTENS,
+                          p1$fit[,1], 
+                         p2$fit[,1],
+                         p3$fit[,1],
+                         p4$fit[,1])
+
+names(predictions) = c("Time", "Intesity","m1", "m2", "m3", "m4")
+  
+predictions
+
+```
+
+### i. Compare each prediction to the observed number of flowers and calculate the difference (observed – predicted). This is the residual. Calculate the residual mean squared error for each model by adding the squared residuals together and dividing by the number of residual degrees of freedom. This should equal the mean squared error in each ANOVA table.
+
+Our MSE calculated in part h are displayed in the table below. Each of their values matches the residual MSE from their corresponding anova tables. 
+
+```{r, echo = FALSE}
+
+data.frame(mse_m1, mse_m2, mse_m3, mse_m4)
+
+```
+
+
+### j. Now plot the residuals vs. the predicted for each model and see if there are any patterns. If you see any, what might you do to remove them?
+
+```{r, echo = FALSE}
+
+preplot1 = data.frame(resi_m1, p1$fit[,1])
+plot1 = preplot1 %>%
+  ggplot(aes(x = p1.fit...1., y = resi_m1)) +
+  geom_point(color = "red") +
+  ylab("Residuals") +
+  xlab("Predicted value") +
+  ggtitle("Model 1")
+
+preplot2 = data.frame(resi_m2, p2$fit[,1])
+plot2 = preplot2 %>%
+  ggplot(aes(x = p2.fit...1., y = resi_m2)) +
+  geom_point(color = "blue") +
+  ylab("Residuals") +
+  xlab("Predicted value") +
+  ggtitle("Model 2")
+
+preplot3 = data.frame(resi_m3, p3$fit[,1])
+plot3 = preplot3 %>%
+  ggplot(aes(x = p3.fit...1., y = resi_m3)) +
+  geom_point(color = "green") +
+  ylab("Residuals") +
+  xlab("Predicted value") +
+  ggtitle("Model 3")
+
+preplot4 = data.frame(resi_m4, p4$fit[,1])
+plot4 = preplot4 %>%
+  ggplot(aes(x = p4.fit...1., y = resi_m4)) +
+  geom_point(color = "purple") +
+  ylab("Residuals") +
+  xlab("Predicted value") +
+  ggtitle("Model 4")
+
+grid.arrange(plot1, plot2, plot3, plot4, nrow = 2, top = "Figure 3")
+
+```
+
+Figure 3 shows the residuals vs the predicted values for each of the models. The points appear to be randomly distributed around the 0 line: no clear pattern exists for any of the models. This is evidence that our regressions fit well. 
+
+### k. Finally, take the model you think describes the data the best and write a short report for your grandmother who would like to grow these flowers carefully explaining to her how she should best grow them and why. Note that your grandmother is curious about how much changes in light and timing might affect her flowers and how sensitive her results will be to the settings she makes.
+
+I think model 1 best describes the data. Although it does not have the highest adjusted R^2, I think it provides the most insight. If I were to explain it to Grandma I would say:
+
+Dear Grandma,
+
+Both light intensity and the timing of planting play a role in the number of flowers your plants will have. You should plant them late. Late planting results in an average increase of 12 flowers per plant. Moreover, your plants will do better in low intensity light. You should be careful to keep the light intensity under 600 lumens. Plants recieving lights at the 600 lumen level average 23 less plants than a plant recieving 150 lumens. 
+
+Love,
+Your grandson
 
