@@ -1,70 +1,77 @@
 ---
 title: "PHP2514 - Homework 1"
 author: "Jess Kaminsky"
-date: "February 14, 2018"
+date: "February 16, 2018"
 output: html_document
 ---
 
-*Question 1*
-```{r}
+# *Question 1*
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+library(knitr)
+library(ggplot2)
+library(stargazer)
 wine <- read.csv('Wine.csv')
 attach(wine)
 ```
 
-In assessing the relationship between heart disease death rates and average wine consumptions, we will begin by performing simple exploratory data analysis on the data. There are 18 countries represented in this data set and we have average rates of wine consumption and heart disease mortality rates for each country. The purpose of this analysis is to determine if heart disease mortality is associated with average wine consumption and the nature of that relationship, if it exists.
-```{r}
-summary(wine)
+In assessing the relationship between heart disease death rates and average wine consumption, we will begin by performing simple exploratory data analysis on the data. There are 18 countries represented in this data set and we have average rates of wine consumption and heart disease mortality rates for each country. The purpose of this analysis is to determine if heart disease mortality is associated with average wine consumption and the nature of that relationship, if an association exists. Summary statistics on the three variables are presented below.
+```{r, echo = FALSE}
+kable(summary(wine))
 ```
 
-When looking at a scatterplot of wine vs. mortality, we see that the data looks somewhat non-linear. We will continue to explore the raw data and consider applying a log transformation on the variables.
-```{r}
-plot(WINE, MORTALITY, xlab = "Wine Consumption", ylab = "Heart Disease Mortality Rate")
+When looking at Figure 1, we see that the data looks somewhat non-linear. We will continue to explore the raw data but will consider applying a log transformation on the variables.
+
+```{r, echo = FALSE}
+plot(WINE, MORTALITY, xlab = "Average Wine Consumption", ylab = "Heart Disease Mortality Rate", main = "Figure 1")
 ```
-The correlation between our independent variable - wine consumption - and our dependent variable - mortality rate - is -0.74, implying an inverse and moderately strong relationship between the variables. When running a linear regression on our data, we obtain the model Mortality Rate = 7.686 - 0.076 * Wine Consumption, showing that as wine consumption increases, mortality rate decreases. The coefficient of determination of this model (r-squared) is 0.5281 indicating that the observed data are moderately well fit to the regression line. We will now log transform the data and further explore the relationship between these two variables assuming that the data is not normally distributed.
-```{r}
-cor(WINE, MORTALITY)
+
+The correlation between our independent variable - wine consumption - and our dependent variable - mortality rate - is -0.74, implying an inverse and moderately strong relationship between the variables. When running a linear regression on our data, we obtain the model Mortality Rate = 7.686 - 0.076 * Wine Consumption, showing that as wine consumption increases, mortality rate decreases. The coefficient of determination of this model (r-squared) is 0.528 indicating that the observed data are moderately well fit to the regression line. We will now log transform the data and further explore the relationship between these two variables and consider the possibility that the data are not normally distributed.
+
+```{r, results = 'asis', warning=FALSE, message=FALSE, echo = FALSE}
+library(stargazer, quietly = TRUE)
+
+kable(cor(WINE, MORTALITY), row.names = NA, col.names = "Correlation between Wine Consumption and Mortality Rate", align = 'l')
+
 model1 <- lm(MORTALITY ~ WINE, wine)
-summary(model1)
+stargazer(model1, type = 'html', title = "Model 1 - Predicting Mortatlity Rate from Wine Consumption", align = TRUE)
 ```
-*CONSIDER REMOVING*
-```{r}
+
+```{r, echo = FALSE}
+par(mfrow = c(2,2))
 plot(model1)
 ```
 
-When observing a scatter plot of the log-transformed data, the trend appears to follow a linear trend more closely than the raw data.
-```{r}
-plot(log(WINE), log(MORTALITY), xlab = "Log of Wine Consumption", ylab = "Log of Mortality Rate")
+When observing a Figure 2, a scatter plot of the log-transformed data, the trend appears to follow a linear trend more closely than the raw data.
+
+```{r, echo = FALSE}
+plot(log(WINE), log(MORTALITY), xlab = "Log of Wine Consumption", ylab = "Log of Mortality Rate", main = "Figure 2")
 ```
 
-The correlation between the two log transformed variables is -0.859 - stronger than the correlation of the same two variables before they were transformed. After running a linear regression on our transformed data, we obtain the model log Mortality Rate = 2.55 - 0.355 * log Wine Consumption. The coefficient of determination of this model (r-squared) is 0.7221 indicating that the observed transformed data are fit to the regression line better than the raw data. This means that 72% of the variation among observed values of heart disease mortality rate can be explained by the log linear relationship between wine consumption and mortality rate. Based on the log linear model we generated, every 1% change in wine consumption results in a -0.35% change in mortality rate.
-```{r}
-cor(log(WINE), log(MORTALITY))
+The correlation between the two log transformed variables is -0.859 - stronger than the correlation of the same two variables before they were transformed. After running a linear regression on our transformed data, we obtain the model log Mortality Rate = 2.55 - 0.355 * log Wine Consumption. The coefficient of determination of this model (r-squared) is 0.7221 indicating that the observed transformed data are fit to the regression line better than the raw data. This means that 72% of the variation among observed values of heart disease mortality rate can be explained by the log linear relationship between wine consumption and mortality rate. Based on the log linear model we generated, every 1% change in wine consumption results in a -0.35% change in mortality rate. When comparing the normal Q-Q plots for both the raw model and log transformed model we can see further evidence for favoring the transformed model because the residuals fall closer to the line.
+
+```{r star, results = 'asis', warning=FALSE, message=FALSE, echo = FALSE}
+kable(cor(log(WINE), log(MORTALITY)), row.names = NA, col.names = "Correlation between Wine Consumption and Mortality Rate", align = 'l')
 model2 <- lm(log(MORTALITY) ~ log(WINE), wine)
-summary(model2)
+stargazer(model2, type = 'html', title = "Model 2 - Predicting log Mortatlity Rate from log Wine Consumption", align = TRUE)
+par(mfrow = c(2,2))
 plot(model2)
 ```
 
-Figure X shows the log linear model we generated in pink. The gray bands are 95% confidence intervals for the mean log mortality at each log wine consumption. The purple points are the log transformed predicted values. We see that many of the points fall outside of the mean confidence interval. This provides some evidence that there are countries that differ from the mean mortality rate among countries with similar levels of wine consumption. To further explore this relationship we will stratify wine consumption into tertiles and compare the variances of each group. 
-```{r}
+Figure 3 shows the log linear model we generated in pink. The gray bands are 95% confidence intervals for the mean log mortality at each log wine consumption. The purple points are the log transformed predicted values. We see that many of the points fall outside of the mean confidence interval. This provides some evidence that there are countries that differ from the mean mortality rate among countries with similar levels of wine consumption. Looking at the plot, we can see that countries with lower log wine consumption rates have a larger variance in log mortality rates; however, this may be due to chance as there are more countries with lower log wine consumption rates.
+
+```{r, echo = FALSE}
 logboth = ggplot(data = wine) + geom_point(aes(x = log(wine$WINE), y = log(wine$MORTALITY)), color = "purple")
-logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE, color = "pink") + theme_minimal() + xlab("Log of Wine Consumption") + ylab("Log of Mortality Rate")
-```
-```{r}
-
+logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE, color = "pink") + theme_minimal() + xlab("Log of Wine Consumption") + ylab("Log of Mortality Rate") + ggtitle("Figure 3")
 ```
 
-*Question 2*
+# *Question 2*
 
-Part A:
-```{r}
+```{r, echo = FALSE}
 flowers <- read.csv('flowers.csv')
 flowers[,4] <- rep(c(1,2))
 names(flowers)[4] <- "REPLICATE"
 flowers$REPLICATE <- as.factor(flowers$REPLICATE)
-```
 
-Part B:
-```{r}
 flowers[,5] <- NA
 names(flowers)[5] <- "INTENS_CAT"
 for (i in 1:nrow(flowers)) {
@@ -88,67 +95,114 @@ for (i in 1:nrow(flowers)) {
   }
 }
 flowers$INTENS_CAT <- as.factor(flowers$INTENS_CAT)
+
+for(i in 1:nrow(flowers)) {
+if (flowers$TIME[i] == 1) {
+  flowers$TIME[i] <- "Late"
+} else {
+  flowers$TIME[i] <- "Early"
+}
+}
+flowers$TIME <- as.factor(flowers$TIME)
 ```
 
-Part C:
-The research questions are: *What are effects of intensity and timing? Is there an interaction between the two factors?*
+The purpose of the following analysis is to understand the effects of light intensity and timing on flower growth. The original dataset contains 3 variables - a continuous variable measuring flower petal growth, a categorical variable for time represeting two different timings of onset of light treatment - early or late, and a continuous variable for lighting intensity. In order to explore our data further, we generated two more variables. A categorical variable, replicate, was created to differentiate replicates of the same timing and light intensities. A categorical variable, intensity category was created that converts the continuous variable for lighting intensity into a categorical variable that stratifies values of light intensity into six categories. We will explore the difference of modeling flower growth with continuous versus categorical light intensity; however, we do not expect the models to be very different because we only have 6 distinct continuous values represented in our dataset. Summary statistics for all variables are provided in the table below.
 
-Part D:
-First create an analysis of variance using timing and the categorical form of the light intensity variable. Determine if there is an effect of each factor.
-
-In this study, each combination of timing and light intensity was replicated twice. Before analyzing the data, we should verify that replicates do not have a different effect on flower growth. After performing an analysis on the raw data predicting flower growth from time, light intensity as a categorical variable, and replicate group, we observe that the coefficient for replicate is insignificant which means that the results do not differ by replicate. We can continue the data analysis with the data combined anddisregard the replicate term.
-```{r}
-summary(aov(FLOWERS ~ TIME + INTENS_CAT + REPLICATE, flowers))
-summary(aov(FLOWERS ~ TIME + INTENS_CAT + TIME*INTENS_CAT, flowers))
-m1 <- lm(FLOWERS ~ TIME + INTENS_CAT, flowers)
-summary(m1)
+```{r, echo = FALSE}
+kable(summary(flowers))
 ```
 
-Part E:
-Then create an interaction between light intensity and timing by multiplying the two variables and test for the presence of an interaction.
-```{r}
+Figure 4 shows that plants that grew under early onset of light treatment have a higher mean growth than those with late onset. Figure 5 suggests that mean flower growth decreases with increasing light intensity.
+
+```{r, echo = FALSE}
+par(mfrow = c(1,2))
+boxplot(flowers$FLOWERS ~ flowers$TIME, xlab = "Time", ylab = "Flower Growth", main = "Figure 4")
+
+boxplot(flowers$FLOWERS ~ flowers$INTENS, xlab = "Light Intensity", ylab = "Flower Growth", main = "Figure 5")
+```
+
+Before analyzing the data, we should verify that replicates do not have a different effect on flower growth. After running an analysis of variance on the raw data predicting flower growth from time, light intensity as a categorical variable, the interaction between light and timem, and replicate group, we observe that the coefficient for replicate is insignificant with p-value = 0.3078 which means that the results do not differ by replicate. We can continue the data analysis with the data combined and disregard the replicate term. The interaction term in this model is also insignificant with p-value = 0.8301 indicating that it can be removed from the model and there is not a significant interaction between time and categorical light intensity. The interaction term is also insignificant when replicate is not included in the model. Next, we should generate a linear model predicting flower growth from only time and categorical light intensity. 
+
+#### Throughout the folowing analysis, the following models will be referred to by number:
+  + Model 1: Flower Growth = Time + Categorical Light Intensity
+  + Model 2: Flower Growth = Time + Categorical Light Intensity + Time*Categorical Light Intensity
+  + Model 3: Flower Growth = Time + Continuous Light Intensity
+  + Model 4: Flower Growth = Time + Continuous Light Intensity + Time*Continuous Light Intensity
+
+```{r, echo = FALSE}
+## ANOVA WITH REPLICATE
+summary(aov(FLOWERS ~ TIME + INTENS_CAT + REPLICATE + TIME*INTENS_CAT, flowers))
+##ANOVA WITHOUT REPLICATE
 summary(aov(FLOWERS ~ TIME + INTENS_CAT + TIME*INTENS_CAT, flowers))
 m2 <- lm(FLOWERS ~ TIME + INTENS_CAT + TIME*INTENS_CAT, flowers)
-summary(m2)
+
 ```
 
-Part F:
-Now repeat the process but using light intensity as a continuous variable.
-```{r}
-summary(aov(FLOWERS ~ TIME + INTENS, flowers))
-m3 <- lm(FLOWERS ~ TIME + INTENS, flowers)
+The linear model generated to predict flower growth from timing and categorical light intensity is significant and seems to fit the data moderately well with r-squared = 0.8231. The residual standard error is 6.719. Looking at a plot of the residual versus fitted values for this model, we see that the errors seem to be evenly distributed around 0; however, using the continuous version of light intensity may provide a better model with smaller residual values.
+
+```{r, results = 'asis', warning=FALSE, message=FALSE, echo = FALSE}
+m1 <- lm(FLOWERS ~ TIME + INTENS_CAT, flowers)
+stargazer(m1, type = 'html', title = "Model 1 - Predicting Flower Growth from Time and Categorical Light Intensity", align = TRUE)
+par(mfrow = c(2,2))
+plot(m1)
+```
+
+The next relationship we will explore is one between flower growth as predicted by time and continuous light intensity. We will first perform an analysis of variance on a model predicting flower growth from time, continuous light intensity, and an interaction term between the two predictors. When we run this model, we see that the interaction term is highly insignificant with p-value =  0.9096. There is not a significant interaction between time and continuous light intensity. Therefore, we will drop the interaction term from the model and generate a linear model predicting flower growth from time and continuous light intensity.
+```{r, echo = FALSE}
 summary(aov(FLOWERS ~ TIME + INTENS + TIME*INTENS, flowers))
 m4 <- lm(FLOWERS ~ TIME + INTENS + TIME*INTENS, flowers)
 ```
 
-Part G:
-Then perform F-tests to compare the four model you have created (light as continuous and categorical with and without the interaction)
-```{r}
+After dropping the interaction term from the model, the linear model generated using continuous light intensity has r-squared = 0.7992 which is slighty smaller than that of the categorical light model indicating a slightly worse fit - but the difference is not big enough to indicate that one model must be better than the other. The residual standard error for this model is 6.441 which is also slightly smaller than that of the categorical light model indicating that the continuous model is slightly better at predicting flower growth.
+
+```{r, results = 'asis', warning=FALSE, message=FALSE, echo = FALSE}
+m3 <- lm(FLOWERS ~ TIME + INTENS, flowers)
+stargazer(m3, type = 'html', title = "Model 3 - Predicting Flower Growth from Time and Continuous Light Intensity", align = TRUE)
+par(mfrow = c(2,2))
+plot(m3)
+```
+
+We will now perform an analysis of variance to compare model 1 vs model 2 and model 3 vs model 4. When comparing model 1 and model 2, the F-test generated a p-value = 0.8342 indicating that there is not a significant difference between the two models. This reinforces the results obtained earlier than the interaction term in not significant. We do not have enough evidence that the coefficient of the interaction term is significantly different from zero. 
+
+```{r, echo = FALSE}
 anova(m1, m2)
+```
+
+When comparing model 3 and model 4, we obtain a highly insignificant p-value = 0.9096. We obtain the same results as the previous model comparison. These models are not significantly different due to the fact that the interaction term in model 4 is insignificant in predicting flower growth.
+
+```{r, echo = FALSE}
 anova(m3, m4)
 ```
 
-Part H:
-Predict the number of flowers grown at each combination of light and timing for each of the four models.
-```{r}
+We will now use the 4 models generated and our original light and time data to predict flower growth. The predicted values are shown in the table below.
+
+```{r, echo = FALSE}
 m1_predict <- predict(m1)
 m2_predict <- predict(m2)
 m3_predict <- predict(m3)
 m4_predict <- predict(m4)
 
-predicted_values <- cbind(time = flowers$TIME, intensity = flowers$INTENS, 
+predicted_values <- cbind(time = as.character(flowers$TIME), intensity = flowers$INTENS, 
                           intensity_cat = flowers$INTENS_CAT,
-                          m1 = m1_predict, m2 = m2_predict, m3 = m3_predict,
-                          m4 = m4_predict)
+                          model1 = m1_predict, model2 = m2_predict, model3 = m3_predict,
+                          model4 = m4_predict)
+kable(predicted_values, caption = "Predicted Values for Models 1 - 4")
 ```
 
-Part I:
-Compare each prediction to the observed number of flowers and calculate the difference (observed – predicted). This is the residual. Calculate the residual mean squared error for each model by adding the squared residuals together and dividing by the number of residual degrees of freedom. This should equal the mean squared error in each ANOVA table.
-```{r}
-##calculate residual values
-residual_values <- cbind(m1 = flowers$FLOWERS - m1_predict, m2 = flowers$FLOWERS - m2_predict,
-                         m3 = flowers$FLOWERS - m3_predict, m4 = flowers$FLOWERS - m4_predict)
+The following table shows the residual value which compares each prediction to the observed number of flowers by subtracting observed value in the data minus the predicted value from the model.
 
+```{r, echo = FALSE}
+##calculate residual values
+residual_values <- cbind(model1 = flowers$FLOWERS - m1_predict, model2 = flowers$FLOWERS - 
+                      m2_predict, model3 = flowers$FLOWERS - m3_predict, model4 = 
+                        flowers$FLOWERS - m4_predict)
+kable(cbind(time = as.character(flowers$TIME), intensity = flowers$INTENS, 
+                          intensity_cat = flowers$INTENS_CAT, residual_values), caption = "Residual Values for Models 1 - 4")
+```
+
+We will also calculate the mean squared error for each model by adding the squared residuals together and dividing by the number of residual degrees of freedom. The values are shown in the table below. These values are the same as the mean squared error in each respective ANOVA.
+
+```{r, echo = FALSE}
 ##calculate MSE manually and show that it is equal to the MSE from the anova table
 MSE_m1 <- sum(residual_values[,1] * residual_values[,1]) / m1$df.residual
 ANOVA_MSE_1 <- summary(aov(m1))[[1]] $ `Mean Sq`[3]
@@ -161,17 +215,28 @@ ANOVA_MSE_3 <- summary(aov(m3))[[1]] $ `Mean Sq`[3]
 
 MSE_m4 <- sum(residual_values[,4] * residual_values[,4]) / m4$df.residual
 ANOVA_MSE_4 <- summary(aov(m4))[[1]] $ `Mean Sq`[4]
+
+MSE_total <- c(Model_1_MSE = MSE_m1, Model_2_MSE = MSE_m2, Model_3_MSE = MSE_m3, Model_4_MSE = MSE_m4)
+kable(MSE_total)
 ```
 
-Part J:
-Now plot the residuals vs. the predicted for each model and see if there are any patterns. If you see any, what might you do to remove them?
-```{r}
-plot(residual_values[,1], predicted_values[,4])
-plot(residual_values[,2], predicted_values[,5])
-plot(residual_values[,3], predicted_values[,6])
-plot(residual_values[,4], predicted_values[,7])
+The plots below present residual versus predicted values for each model. The plots for models 1, 3, and 4 show the points to be randomly but evenly distributed around 0, indicating that our model is not biased and that our errors are indeed random. The plot for model two shows a pattern - precise symmetry around 0. The symmetry in this residual plot occurs because model 2 includes 3 categorical predictors - timing, light intensity, and an interaction term. We could potentially fix this by changing the order of the factor levels of these variables; however, this is not concering because we have chosen to drop this model due to its' insignificant interaction term.
+
+```{r, echo = FALSE}
+par(mfrow = c(2,2))
+plot(predicted_values[,4], residual_values[,1], main = "Model 1", xlab = "Predicted Values", ylab = "Residual Values")
+abline(h = 0)
+plot(predicted_values[,5], residual_values[,2], main = "Model 2", xlab = "Predicted Values", ylab = "Residual Values")
+abline(h = 0)
+plot(predicted_values[,6], residual_values[,3], main = "Model 3", xlab = "Predicted Values", ylab = "Residual Values")
+abline(h = 0)
+plot(predicted_values[,7], residual_values[,4], main = "Model 4", xlab = "Predicted Values", ylab = "Residual Values")
+abline(h = 0)
 ```
 
-Part K:
-Finally, take the model you think describes the data the best and write a short report for your grandmother who would like to grow these flowers carefully explaining to her how she should best grow them and why. Note that your grandmother is curious about how much changes in light and timing might affect her flowers and how sensitive her results will be to the settings she makes.
+As a result of the preceeding analyses, the model that should be used to describe the relationship between flower growth, light and timing is model 3. After eliminating models 2 and 4 due to insignificant interaction terms, we further examined all details of models 1 and 3 to determine which one fits our data and predicts flower growth best. As explained above, model 1 has a slightly better correlation than model 3, but model 3 has a slightly better mean squared error. It is important to note that the only difference between models 1 and 3 is the data type of the lighting intensity variable. Model 1 uses a categorical version of light intensity while model 3 uses a continuous version. Because the models are so similar in terms of fit and prediction accuracy, we will choose model 3 as the best model for explaining the relationship. Although our data does not present more than 6 different values for continuous light intensity, this model will allow us to generate more accurate predictions based on varying continuous values of light intensity. Model 3 predicts that flower growth = 83.464 - 12.158(TimeLate) - 0.040(LightIntensity) and can be interpreted as follows. When light intensity is equal to 0 and light treatment is late, we predict that the mean flower growth will be 83.464 - although, this is extrapolation because we do not have any data where light intensity is equal to 0 and it is most likely an unlikely scenario. The model also predicts that having a late light treatment rather than early will cause mean flower growth to decrease by 12.158. For every 1 unit increase in light intensity, we predict that mean flower growth will decrease by 0.040. Based on these results, it seems that in order to acheive the best flower growth one should employ early light treatment and low light intensity. I would recommend using 150 light intensity as this is the minimum value we saw in our data. We are unable to make inferences about flower growth when light intensity is below 150 or above 900. These results reinforce what we observed in the boxplots during preliminary exploratory data analysis.
+
+
+
+curious about how much changes in light and timing might affect her flowers and how sensitive her results will be to the settings she makes.
 
