@@ -1,0 +1,144 @@
+---
+title: "PHP2614 HW1"
+author: "David Chen"
+date: "2/7/2018"
+output: html_document
+---
+
+```{r, echo=FALSE}
+library(readr)
+library(ggplot2)
+```
+
+```{r, echo=FALSE}
+Wine <- read_csv("~/Desktop/Repository/2614/Wine.csv")
+```
+
+```{r}
+attach(Wine)
+summary(Wine)
+
+plot(WINE, MORTALITY, xlab = "Wine Consumption", ylab = "Heart Disease Mortality Rate")
+cor(WINE, MORTALITY)
+wine.m1 <- lm(MORTALITY ~ WINE, Wine)
+summary(wine.m1)
+```
+An initial look at the graph of Heart Disease Mortality Rate relative to Wine Consumption suggests that there is an inverse relationship, which is supported by the -0.7455682 correlation calcluation as well as the linear regression calcuation (Mortality = 7.68655 - 0.07608*Wine). However, the relationship portrayed by the graph does not suggest a linear relationship between the outcome and the predictor. This could be potentially due to outliers within the dataset, notably the wine consumption rates of 75.9 from both Italy and France. 
+
+To mitigate the skewness of the few large values, a log transformation was performed:
+```{r}
+plot(log(WINE), log(MORTALITY), xlab = "Wine Consumption", ylab = "Heart Disease Mortality Rate")
+cor(log(WINE), log(MORTALITY))
+wine.m2 <- lm(log(MORTALITY) ~ log(WINE), Wine)
+summary(wine.m2)
+```
+The graph of the log transformed data shows a stronger linear relationship between the outcome and the predictor. The correlation is -0.8593213, which is stronger than the previous correlation calculated from the raw data. Furthermore, after running a linear regression, the model logMortality = 2.55 - 0.3556*logWine is obtained with an adjusted R-squared coefficient of 0.7221. Comparing this to the model from the raw data, the beta-value of the wine consumption predictor as well as the R-squared coefficient are greater in magnitude in the log transformed model. This suggests that the log transformed model fits better in a linear regression model and that it is able to better explain the variation between the observed values (R-squared 0.7221 in log vs R-squared 0.5281 in raw). 
+
+```{r}
+logboth = ggplot(data = Wine) + geom_point(aes(x = log(Wine$WINE), y = log(Wine$MORTALITY)), color = "navy")
+logboth + geom_smooth(aes(x = log(WINE), y = log(MORTALITY)), method = "lm", se = TRUE, color = "maroon") + theme_minimal() + xlab("Log of Wine Consumption") + ylab("Log of Mortality Rate")
+
+```
+The above graph adds the linear model and a 95% confidence interval(the grey band) to the log transformed graph. From this graph, we can see that there are several countries with similar wine consumption rates but substantially different mortality rates, such as USA & Netherlands as well as New Zealand and Denmark. It is observed that the mortality rate of the USA is 9.3 with a wine consumption rate of 5.1 while the Netherlands have a mortality rate of 5.9 with a wine consumption rate of 5.2. Additionally, the mortality rate of New Zealand is 8.9 with a wine consumption rate of 5.9 while Denmark has a mortality rate of 5.5 with a wine consumption rate of 5.9. The variance of the mortality rate with similar wine consumption cannot be fully explained by the data provided or the linear regressions constructed. It is most likely that there are other factors and predictors of mortality rate that is different among the countries with similar wine consumption. 
+
+```{r, echo=FALSE}
+Flowers <- read_csv("~/Desktop/Repository/2614/Flowers.csv")
+attach(Flowers)
+```
+
+A.
+```{r}
+Flowers[,4] <- rep(c(1,2))
+names(Flowers)[4] <- "REPLICATE"
+Flowers$REPLICATE <- as.factor(Flowers$REPLICATE)
+```
+
+B
+```{r}
+for (i in 1:length(Flowers$INTENS)) {
+  if (Flowers$INTENS[i] == 150) {
+    Flowers[i,5] <- 1
+  } else if (Flowers$INTENS[i] == 300) {
+    Flowers[i,5] <- 2
+  } else if (Flowers$INTENS[i] == 450) {
+    Flowers[i,5] <- 3
+  } else if (Flowers$INTENS[i] == 600) {
+    Flowers[i,5] <- 4
+  } else if (Flowers$INTENS[i] == 750) {
+    Flowers[i,5] <- 5
+  } else {
+    Flowers[i,5] <- 6
+  }
+}
+names(Flowers)[5] <- "Intensity Category"
+Flowers$`Intensity Category` <- as.factor(Flowers$`Intensity Category`)
+
+plot(Flowers$INTENS[which(Flowers$TIME == 1)], Flowers$FLOWERS[which(Flowers$TIME == 1)], xlab = "Intensity", ylab= "Flowers", main = "Flowers vs Intensity (Time 1)")
+plot(Flowers$INTENS[which(Flowers$TIME == 2)], Flowers$FLOWERS[which(Flowers$TIME == 2)], xlab = "Intensity", ylab= "Flowers", main = "Flowers vs Intensity (Time 2)")
+```
+
+C,D,E
+```{r}
+summary(aov(FLOWERS ~ TIME + `Intensity Category` + REPLICATE, Flowers))
+flowers.m1 <- lm(FLOWERS ~ TIME + `Intensity Category`, Flowers)
+summary(flowers.m1)
+
+summary(aov(FLOWERS ~ TIME + `Intensity Category` + TIME*`Intensity Category`, Flowers))
+flowers.m2 <- lm(FLOWERS ~ TIME + `Intensity Category` + TIME*`Intensity Category`, Flowers)
+summary(flowers.m2)
+```
+
+F
+```{r}
+summary(aov(FLOWERS ~ TIME + INTENS, Flowers))
+flowers.m3 <- lm(FLOWERS ~ TIME + INTENS, Flowers)
+summary(flowers.m3)
+summary(aov(FLOWERS ~ TIME + INTENS + TIME*INTENS, Flowers))
+flowers.m4 <- lm(FLOWERS ~ TIME + INTENS + TIME*INTENS, Flowers)
+summary(flowers.m4)
+
+```
+
+G
+```{r}
+anova(flowers.m1, flowers.m2)
+anova(flowers.m3, flowers.m4)
+
+flowers.m1predict <- predict(flowers.m1)
+flowers.m2predict <- predict(flowers.m2)
+flowers.m3predict <- predict(flowers.m3)
+flowers.m4predict <- predict(flowers.m4)
+```
+
+H
+```{r}
+prediction <- cbind(Flowers = Flowers$FLOWERS, Time = Flowers$TIME, Intensity = 
+                          Flowers$INTENS, Intensity_Category = Flowers$`Intensity Category`,
+                          m1 = flowers.m1predict, m2 = flowers.m2predict, m3 = 
+                          flowers.m3predict, m4 = flowers.m4predict)
+```
+
+I
+```{r}
+flowers.residuals <- cbind(r1 = Flowers$FLOWERS - flowers.m1predict, r2 = Flowers$FLOWERS - 
+                          flowers.m2predict, r3 = Flowers$FLOWERS - flowers.m3predict, 
+                          r4 = Flowers$FLOWERS - flowers.m4predict)
+
+MSE.m1 <- sum(flowers.residuals[,1] * flowers.residuals[,1]) / flowers.m1$df.residual
+ANOVA_MSE.1 <- summary(aov(flowers.m1))[[1]] $ `Mean Sq`[3]
+MSE.m2 <- sum(flowers.residuals[,2] * flowers.residuals[,2]) / flowers.m2$df.residual
+ANOVA_MSE.2 <- summary(aov(flowers.m2))[[1]] $ `Mean Sq`[4]
+MSE.m3 <- sum(flowers.residuals[,3] * flowers.residuals[,3]) / flowers.m3$df.residual
+ANOVA_MSE.3 <- summary(aov(flowers.m3))[[1]] $ `Mean Sq`[3]
+MSE.m4 <- sum(flowers.residuals[,4] * flowers.residuals[,4]) / flowers.m4$df.residual
+ANOVA_MSE.4 <- summary(aov(flowers.m4))[[1]] $ `Mean Sq`[4]
+```
+
+J
+```{r}
+plot(flowers.residuals[,1], prediction[,4])
+plot(flowers.residuals[,2], prediction[,5])
+plot(flowers.residuals[,3], prediction[,6])
+plot(flowers.residuals[,4], prediction[,7])
+
+```
